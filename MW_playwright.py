@@ -1,6 +1,5 @@
 from playwright.sync_api import sync_playwright
-import win32api
-import win32con
+from pynput.mouse import Button, Controller
 import keyboard
 import time
 
@@ -11,7 +10,6 @@ class MWPlaywright:
         self.browser = None
         self.context = None #for maximum screen
         self.page = None
-        self.DPI_scale = float(DPI_scale) #get this from your display settings, e.g., 125% = 1.25
         self.is_running = False
         self.cell_datas = {}
         self.Status_Translater = { #Didn't add "bomb-death" and "bomb-revealed" becasue they show up on death 
@@ -32,6 +30,8 @@ class MWPlaywright:
         self.col_count = None
         self.row_count = None
         self.bomb_count = None
+        self.mouse = Controller() #for clicking function
+        self.DPI_scale = float(DPI_scale) #get this from your display settings, e.g., 125% = 1.25
 
     def Add_Blocker(self, route): #to block adverts and make the site faster
         try: 
@@ -88,24 +88,19 @@ class MWPlaywright:
             self.bomb_count = 99
 
     def Click(self, row, col, action): #Clicking function (right,left,middle)
-        DPI_scale = 1.25 #get this from your display settings, e.g., 125% = 1.25
-        Absuolute_scale_multiplayer = 1 / DPI_scale
+        Absuolute_scale_multiplayer = 1 / self.DPI_scale
         x = int((self.starting_x_cord + col*30) * Absuolute_scale_multiplayer)
         y = int((self.starting_y_cord + row*30) * Absuolute_scale_multiplayer)
 
-        win32api.SetCursorPos((x, y))
+        self.mouse.position = (x, y)
         if action == "left":
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
+            self.mouse.click(Button.left, 1)
         elif action == "right":
             self.cell_datas[(row,col)] = "!" #To change cell to flagged immediately
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)
-            
+            self.mouse.click(Button.right, 1)
         elif action == "middle": 
-            win32api.mouse_event(win32con.MOUSEEVENTF_MIDDLEDOWN, x, y, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_MIDDLEUP, x, y, 0, 0)
-        time.sleep(0.0125)
+            self.mouse.click(Button.middle, 1)
+        time.sleep(0.015)
 
     def Set_cell_datas(self): #cell datas comes as "CELL Y_X" --- Javascript code works in browser
         raw_cell_datas = self.page.evaluate("""() => {
