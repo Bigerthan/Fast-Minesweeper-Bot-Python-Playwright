@@ -1,6 +1,9 @@
 # Python-Minesweeper-Bot
 Minesweeper Solver Bot with Playwright library
 
+# LAST CHANGES:
+Click function is changed. I was useing win32api/win32con library and it doesn't work on non-windows operating systems so I changed function to use pynput for better cross-platform compatibility.
+
 # Please read whole text for better understanding about the Bot.
 After you run the code and choose the difficulty, chrome browser and then the website (https://minesweeperonline.com) will open.
 
@@ -29,6 +32,6 @@ Press "ESC" to CLOSE program.
 
 # USED LIBRARIES:
 1) PlayWright (sync_playwright)
-2) win32api / win23con
+2) pynput
 3) keyboard
 4) time
