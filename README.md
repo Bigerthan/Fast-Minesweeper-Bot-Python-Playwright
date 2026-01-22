@@ -1,5 +1,5 @@
 # Python-Minesweeper-Bot
-Minesweeper Solver Bot --- with Playwright library
+Minesweeper Solver Bot with Playwright library
 
 # Please read whole text for better understanding about the Bot.
 After you run the code and choose the difficulty, chrome browser and then the website (https://minesweeperonline.com) will open.
@@ -21,7 +21,6 @@ Minesweeper isn't a game you can win with 100% certainty. You might get stuck wi
 It has an issue: normally when you set a record, a pop-up or alert shows up but, for reasons I've yet to know the pop-up is not opening and the record's name becomes "unknown" by default. The website has an anti-bot detector which prevents our records from being saved on the leaderboard but, it's not a problem because I made this code only for educational purposes. I like playing minesweeper and I respect other players so I won't try to get past the anti-bot detector.
 
 WARING: When you use the bot and win, the anti-bot detection bans your IP (I guess. I'm not very sure what it does). First your record will stay on leaderboard for some time but when it detected and deleted, you'r name won't even show up on the leaderboard.
-
 
 # Controls:
 Press "R" to Pause/Resume
