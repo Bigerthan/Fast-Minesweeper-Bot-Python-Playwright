@@ -2,6 +2,7 @@ from playwright.sync_api import sync_playwright
 from pynput.mouse import Button, Controller
 import keyboard
 import time
+import re
 
 class MWPlaywright:
     def __init__(self, url, DPI_scale = 1.25):
@@ -11,6 +12,8 @@ class MWPlaywright:
         self.context = None #for maximum screen
         self.page = None
         self.is_running = False
+        self.face_state = None
+        self.face_coord = (0,0)
         self.cell_datas = {}
         self.Status_Translater = { #Didn't add "bomb-death" and "bomb-revealed" becasue they show up on death 
             "blank": "?",
@@ -25,13 +28,16 @@ class MWPlaywright:
             "open7": 7,
             "open8": 8}
         self.mode = ""
-        self.starting_x_cord = None
-        self.starting_y_cord = None
+        self.starting_x_coord = None
+        self.starting_y_coord = None
         self.col_count = None
         self.row_count = None
         self.bomb_count = None
         self.mouse = Controller() #for clicking function
         self.DPI_scale = float(DPI_scale) #get this from your display settings, e.g., 125% = 1.25
+        self.Win_scores = []
+        self.Last_win_score = None
+        self.Restart_count = 0
 
     def Add_Blocker(self, route): #to block adverts and make the site faster
         try: 
@@ -62,65 +68,103 @@ class MWPlaywright:
         self.page.goto(self.url)
         self.Set_Mode_Details() 
 
-    def Set_Mode_Details(self): #Game Mode details (row/col count, bomb count, starting x/y posissions )
+    def Set_Mode_Details(self): #Game Mode details (row/col count, bomb count, starting cell x/y posissions, face coord)
         if "beginner" in self.url:
             self.mode = "Beginner"
-            self.starting_x_cord = 660 #+30 to first cell
-            self.starting_y_cord = 228 #+30 to first cell
+            self.starting_x_coord = 660 #+30 to first cell
+            self.starting_y_coord = 228 #+30 to first cell
             self.col_count = 9
             self.row_count = 9
             self.bomb_count = 10
+            self.face_coord = (810,190)
 
         elif "intermediate" in self.url:
             self.mode = "Intermediate"
-            self.starting_x_cord = 650 #+30 to first cell
-            self.starting_y_cord = 220 #+30 to first cell
+            self.starting_x_coord = 650 #+30 to first cell
+            self.starting_y_coord = 220 #+30 to first cell
             self.col_count = 16
             self.row_count = 16
             self.bomb_count = 40
+            self.face_coord = (900,200)
 
         else:
             self.mode = "Expert"
-            self.starting_x_cord = 480 #+30 to first cell
-            self.starting_y_cord = 220 #+30 to first cell
+            self.starting_x_coord = 480 #+30 to first cell
+            self.starting_y_coord = 220 #+30 to first cell
             self.col_count = 30
             self.row_count = 16
             self.bomb_count = 99
+            self.face_coord = (950,200)
 
-    def Click(self, row, col, action): #Clicking function (right,left,middle)
+    def Click(self, row, col, action, coords=()): #Clicking function (right,left,middle)
         Absuolute_scale_multiplayer = 1 / self.DPI_scale
-        x = int((self.starting_x_cord + col*30) * Absuolute_scale_multiplayer)
-        y = int((self.starting_y_cord + row*30) * Absuolute_scale_multiplayer)
+        if coords:
+            self.mouse.position = (coords[0]*Absuolute_scale_multiplayer,coords[1]*Absuolute_scale_multiplayer)
+            if action == "left":
+                self.mouse.click(Button.left, 1)
+            elif action == "right":
+                self.mouse.click(Button.right, 1)
+            elif action == "middle": 
+                self.mouse.click(Button.middle, 1)
+            time.sleep(0.5)
+        
+        else:
+            x = int((self.starting_x_coord + col*30) * Absuolute_scale_multiplayer)
+            y = int((self.starting_y_coord + row*30) * Absuolute_scale_multiplayer)
 
-        self.mouse.position = (x, y)
-        if action == "left":
-            self.mouse.click(Button.left, 1)
-        elif action == "right":
-            self.cell_datas[(row,col)] = "!" #To change cell to flagged immediately
-            self.mouse.click(Button.right, 1)
-        elif action == "middle": 
-            self.mouse.click(Button.middle, 1)
-        time.sleep(0.015)
+            self.mouse.position = (x, y)
+            if action == "left":
+                self.mouse.click(Button.left, 1)
+            elif action == "right":
+                self.cell_datas[(row,col)] = "!" #To change cell to flagged immediately
+                self.mouse.click(Button.right, 1)
+            elif action == "middle": 
+                self.mouse.click(Button.middle, 1)
+            time.sleep(0.015)
 
-    def Set_cell_datas(self): #cell datas comes as "CELL Y_X" --- Javascript code works in browser
-        raw_cell_datas = self.page.evaluate("""() => {
+    def Open_first_cell(self): #automaticly opening middle cell
+        self.Click(self.row_count/2,self.col_count/2, "left")
+
+    def Restart_on_Death(self, Auto_Start=False):
+        if self.face_state == "facedead":
+            time.sleep(0.5) #preventing miss click
+            #print("The bot died. Restarting.")
+            self.Click(0,0,"left",self.face_coord) #pressing face to restart
+            self.Restart_count += 1
+            if Auto_Start: self.Open_first_cell()
+
+    def Restart_on_Win(self, Auto_Start=False):
+        if self.face_state == "facewin":
+
+            share_text = self.page.inner_text("#share-text")
+            Win_score = int(re.findall(r"\d", share_text)[0]) #getting win score (int) from share text
+            if Win_score:
+                self.Win_scores.append(Win_score)
+                self.Last_win_score = Win_score
+
+            time.sleep(0.5)
+            #print(f"The bot won the game in {self.Last_win_score} seconds. Restarting.")
+            self.Click(0,0,"left",self.face_coord) #pressing face to restart
+            self.Restart_count += 1
+            if Auto_Start: self.Open_first_cell()
+
+    def Set_DOM_data(self): #cell datas come as "CELL Y_X" --- Javascript code works in browser
+        javascript_cell_datas = self.page.evaluate("""() => {
             const squares = document.querySelectorAll('#game .square');
             const data = {};
                 
             squares.forEach(sq => {
                 if (sq.style.display === 'none') return;                 // Skip hidden squares
                 data[sq.id] = sq.className.replace('square ', '');       //1_1: "blank"
-            });
-                                        
+            });                   
             return data;
         }""")
-            
-        cell_datas = {
+        self.cell_datas = {
             (int(key.split("_")[0]),int(key.split("_")[1])): self.Status_Translater.get(status, "?") 
-            for key, status in raw_cell_datas.items()}
-        
-        self.cell_datas = cell_datas
-        
+            for key, status in javascript_cell_datas.items()}
+        #######
+        self.face_state = self.page.get_attribute("#face", "class")
+    
     def Get_Neighbors(self, y, x, type="dict"): 
         neighbors_list = []
         for r in [-1,0,1]:
@@ -156,13 +200,13 @@ class MWPlaywright:
             return cell_num - self.Get_Neighbor_Flaggeds(y,x)
 
     def Get_Cell_Details(self, y, x): #--- TO GET Neighbor statuses, USE self.cell_datas[(ny, nx)] --- Y(row), X(col), STATUS, FLAGGED N. COUNT, NUM N. COUNT, UNKNOWN N. LIST, ALL N. LIST 
-        neighbors_cords = self.Get_Neighbors(y, x, type="list")
+        neighbors_coords = self.Get_Neighbors(y, x, type="list")
         cell_status = self.cell_datas[(y, x)]
         unknown_neighbors = []
         flag_count= 0
         number_count= 0
         
-        for  ny, nx in neighbors_cords:
+        for  ny, nx in neighbors_coords:
             neighbor_status = self.cell_datas[(ny, nx)]
             if neighbor_status == "?":
                 unknown_neighbors.append((ny, nx))
@@ -178,7 +222,7 @@ class MWPlaywright:
             "flag_count":flag_count,
             "number_count":number_count,
             "unknown_neighbors":unknown_neighbors,
-            "all_neighbors":neighbors_cords}
+            "all_neighbors":neighbors_coords}
         return cell_details
 
     def Skip_cell(self, cell_details):
@@ -306,7 +350,7 @@ class MWPlaywright:
                         for cy , cx in diff_cells:
                             self.Click(cy, cx, "left")
 
-    def ACTIONS(self, cell_details):
+    def Logic_actions(self, cell_details):
         if self.Skip_cell(cell_details): return #Skip_cell if not needed
         
         self.Two_Steps_ahead_Logic(cell_details)
@@ -314,13 +358,16 @@ class MWPlaywright:
         self.Difference_Logic(cell_details)
         self.Basic_Logic(cell_details) 
 
-    def Start_BOT(self):
+    def Start_BOT(self, Auto_Start=False, will_Restart_on_Death=True, will_Restart_on_Win=False, Auto_Start_on_Death_Restart=False, Auto_Start_on_Win_Restart=False):
         print('Browser is starting. Press "R" to Stop, Press "ESC" to Quit. It may take some time at the first time.\n')
         time.sleep(1)
         self.Open_Browser()
         is_browser_running = True
         is_bot_active = True
         print(f"Mode: {self.mode}\nColumns: {self.col_count}\nRows: {self.row_count}\nBombs: {self.bomb_count}\n")
+
+        #Before while
+        if Auto_Start: self.Open_first_cell()
 
         while is_browser_running:
             if keyboard.is_pressed("ESC"): #Press ESC to stop the program
@@ -338,14 +385,24 @@ class MWPlaywright:
                 time.sleep(0.5)
 
             if is_bot_active:
-                self.Set_cell_datas()
+                self.Set_DOM_data()
+
                 for y in range(1, self.row_count + 1):
                     for x in range(1, self.col_count + 1):
-                        self.ACTIONS(self.Get_Cell_Details(y, x))
+                        self.Logic_actions(self.Get_Cell_Details(y, x))
+
+                if will_Restart_on_Death: self.Restart_on_Death(Auto_Start_on_Death_Restart)
+                if will_Restart_on_Win: self.Restart_on_Win(Auto_Start_on_Win_Restart)
 
             else:
                 time.sleep(0.1)
-        self.Close_Browser() #close Bot and Broswer
+
+        if sum(self.Win_scores) != 0:
+            print(f"\nBOT STATISTICS:\nWon: {len(self.Win_scores)}    Lost: {self.Restart_count-len(self.Win_scores)}\nTotal game(s): {self.Restart_count}\nWin Rate: %{len(self.Win_scores)*100/(self.Restart_count)}\nAverage score: {sum(self.Win_scores)/len(self.Win_scores)} second(s)\n")
+        else:
+            print(f"Bot didn't win.")
+            
+        self.Close_Browser() #Close the Bot and the Broswer
 
     def Close_Browser(self):
         if self.browser:
@@ -372,4 +429,9 @@ if __name__ == "__main__":
         print("Invalid input. Defaulting to Expert mode.\n")
 
     MW_BOT = MWPlaywright(url, DPI_scale=1.25)
-    MW_BOT.Start_BOT()
+    MW_BOT.Start_BOT(
+        Auto_Start=True,
+        will_Restart_on_Death=True,
+        will_Restart_on_Win=True,
+        Auto_Start_on_Death_Restart=True,
+        Auto_Start_on_Win_Restart=True)
