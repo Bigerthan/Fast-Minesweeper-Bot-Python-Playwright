@@ -1,9 +1,10 @@
 # NOTE: I haven't added win rates yet but they will be here.
-## Beginner Mode ( *1 second* )
+
+## Beginner Mode Record ( 1 second )
 ![](MW_PW_photos/Beginner_Mode_1sec.png)
 
-## Intermediate Mode ( *1 second* )
+## Intermediate Mode Record ( 1 second )
 ![](MW_PW_photos/Intermediate_Mode_1sec.png)
 
-## Expert Mode ( *2 second* )
+## Expert Mode Record ( 2 second )
 ![](MW_PW_photos/Expert_Mode_2sec.png)
