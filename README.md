@@ -2,13 +2,13 @@
 Minesweeper Solver Bot with Playwright library
 
 # LAST CHANGES:
-- Added some optional settings when you starting the bot. Check "Explanation.md" if you want to see.
-  
 - Added "Non_Logical_action" function. It is responsible for trying to solve 50%-50% or other luck-based, unsolvable with logic parts. Check "Explanation.md" if you want more detail about how it works.
 
 - Added a function called "No_Unflagged_Bomb_Left_Action" and its purpose is: when all the bombs are founded, it opens all the unopened cells/boxes to finish the game.
   
 - Click function has changed again. Now it doesn't clicking on the screen, it clicks on the browser so you can close the window and it is going to run in the backround. This change also made clicking safer and no need left to check DPI scale.
+
+- Added some optional settings when you starting the bot. Check "Explanation.md" if you want to see.
 ### Small changes:
 - Added Statistics. It shows up when you close the bot (Only works if you open "Restart_on_Win" and other settings).
 - Added Founded bomb counter.
@@ -34,7 +34,7 @@ It has another issue for now. Sometimes it keeps flagging and unflagging same pl
 # Controls:
 Press "R" to Pause/Resume
 
-Press "ESC" to CLOSE program.
+Press "ESC" to CLOSE the program.
 
 # USED LIBRARIES:
 1) PlayWright (sync_playwright)
