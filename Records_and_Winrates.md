@@ -1,3 +1,4 @@
+# NOTE: I haven't added win rates yet but they will be here.
 ## Beginner Mode ( *1 second* )
 ![](MW_PW_photos/Beginner_Mode_1sec.png)
 
