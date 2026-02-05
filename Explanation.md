@@ -30,18 +30,26 @@ But are they enough, do you need only this much logical action to win the game?
 Well, no. As you know sometimes minesweeper is only a guessing game and you can't do anything with logics so we need some "Non-Logical Functions".
 # Setting The Settings:
 ![](MW_PW_photos/Settings_expl.png)
+
 As you can see, there are 5 parameters at the bot's main (starting) function, which I refer to as "settings". Let's see what is their meanings.
 #### 1) AUTO START: 
-( True / False ; Default = False)
+- ( True / False ; Default = False )
+- This is automatic "first click" parameter. If you make this parameter "True", the bot will automaticly start the game when page is loaded; else if you leave this parameter as "False", the bot won't start until you open the first cell/box.
 
 #### 2) Will Reset On Death: 
-( True / False ; Default = True)
+- ( True / False ; Default = True )
+- If you leave this parameter as "True", the bot will automaticly restart if it dies; else if you make this parameter "False", the bot won't restart when it dies and you have to click the face emoji in order to restart and then click a cell/box to start the bot again.
 
-#### 3) Auto Start on Death Restart: 
-( True / False ; Default = True)
+#### 3) Auto Start on Death Restart:
+- ( True / False ; Default = True )
+- This parameter only makes a difference when 'Will Restart On Death' is "True".
+- If you leave this parameter as "True", the bot will automaticly open the first cell/box when "Will Restart On Death" restarts the game; else if you make this parameter "False", it won't open the first cell.
 
 #### 4) Will Reset On Win: 
-( True / False ; Default = False)
+- ( True / False ; Default = False )
+- If you make this parameter "True", the bot will automaticly restart if it wins; else if you leave this parameter as "False", the bot won't restart when it wins and you have to click the face emoji in order to restart and then click a cell/box to start the bot again.
 
 #### 5) Auto Start on Win Restart: 
-( True / False ; Default = True)
+- ( True / False ; Default = True )
+- This parameter only makes a difference when 'Will Reset On Win' is "True".
+- If you leave this parameter as "True", the bot will automaticly open the first cell/box when "Will Reset On Win" restarts the game; else if you make this parameter "False", it won't open the first cell.
