@@ -15,7 +15,10 @@ Well, yes. We can use the browser to get cell/box data we need. Because we use t
 ## Then what is after updateing cell/box data?
 Quick answer is useing logical actions. But what are those actions that led us to win the game?
 #### 1) Basic Logic:
-
+This function does 2 things:
+- If the number on the cell/box equals the amount of neighbor flags, it opens all unopened safe cells/boxes.
+- If the amount of unopened cells/boxes equals the number on the cell/box, it flags all unopened cells/boxes.
+  
 #### 2) Difference Logic:
 
 #### 3) Two Steps Ahead Logic:
