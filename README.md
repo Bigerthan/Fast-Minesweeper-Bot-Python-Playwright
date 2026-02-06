@@ -45,9 +45,6 @@ Press "ESC" to CLOSE the program.
 
 # USED LIBRARIES:
 1) PlayWright (sync_playwright)
-2) pynput (mouse)
-3) keyboard
-4) time
-5) re 
-
-
+2) keyboard
+3) time
+4) re 
