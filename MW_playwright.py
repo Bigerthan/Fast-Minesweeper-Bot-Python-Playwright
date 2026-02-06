@@ -1,11 +1,10 @@
 from playwright.sync_api import sync_playwright
-from pynput.mouse import Button, Controller
 import keyboard
 import time
 import re
 
 class MWPlaywright:
-    def __init__(self, url, DPI_scale = 1.25):
+    def __init__(self, url):
         self.url = url
         self.playwright = None
         self.browser = None
@@ -28,16 +27,18 @@ class MWPlaywright:
             "open7": 7,
             "open8": 8}
         self.mode = ""
-        self.starting_x_coord = None
-        self.starting_y_coord = None
-        self.col_count = None
-        self.row_count = None
-        self.bomb_count = None
-        self.mouse = Controller() #for clicking function
-        self.DPI_scale = float(DPI_scale) #get this from your display settings, e.g., 125% = 1.25
+        self.starting_x_coord = 0
+        self.starting_y_coord = 0
+        self.col_count = 0
+        self.row_count = 0
+        self.total_bomb_count = 0
         self.Win_scores = []
         self.Last_win_score = None
         self.Restart_count = 0
+        self.Any_action_taken = False 
+        self.edge_cells= {} #This is for Non-Logical_action
+        self.founded_bomb_count = 0
+        self.Survived_chance = 100
 
     def Add_Blocker(self, route): #to block adverts and make the site faster
         try: 
@@ -61,7 +62,7 @@ class MWPlaywright:
     def Open_Browser(self):
         print("Starting browser...")
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=False, args=["--start-maximized","--disable-blink-features=AutomationControlled"]) #headless=False to see the browser...MAYBE ADD SLOW_MO LATER 
+        self.browser = self.playwright.chromium.launch(headless=False, slow_mo=0, args=["--start-maximized","--disable-blink-features=AutomationControlled"]) #headless=False to see the browser...MAYBE ADD SLOW_MO LATER 
         self.context = self.browser.new_context(no_viewport=True) #maximum screen
         self.page = self.context.new_page()
         self.page.route("**/*", self.Add_Blocker) #opens add bllocker
@@ -75,7 +76,7 @@ class MWPlaywright:
             self.starting_y_coord = 228 #+30 to first cell
             self.col_count = 9
             self.row_count = 9
-            self.bomb_count = 10
+            self.total_bomb_count = 10
             self.face_coord = (810,190)
 
         elif "intermediate" in self.url:
@@ -84,8 +85,8 @@ class MWPlaywright:
             self.starting_y_coord = 220 #+30 to first cell
             self.col_count = 16
             self.row_count = 16
-            self.bomb_count = 40
-            self.face_coord = (900,200)
+            self.total_bomb_count = 40
+            self.face_coord = (890,190)
 
         else:
             self.mode = "Expert"
@@ -93,59 +94,69 @@ class MWPlaywright:
             self.starting_y_coord = 220 #+30 to first cell
             self.col_count = 30
             self.row_count = 16
-            self.bomb_count = 99
-            self.face_coord = (950,200)
+            self.total_bomb_count = 99
+            self.face_coord = (940,190)
 
-    def Click(self, row, col, action, coords=()): #Clicking function (right,left,middle)
-        Absuolute_scale_multiplayer = 1 / self.DPI_scale
-        if coords:
-            self.mouse.position = (coords[0]*Absuolute_scale_multiplayer,coords[1]*Absuolute_scale_multiplayer)
-            if action == "left":
-                self.mouse.click(Button.left, 1)
-            elif action == "right":
-                self.mouse.click(Button.right, 1)
-            elif action == "middle": 
-                self.mouse.click(Button.middle, 1)
-            time.sleep(0.5)
-        
-        else:
-            x = int((self.starting_x_coord + col*30) * Absuolute_scale_multiplayer)
-            y = int((self.starting_y_coord + row*30) * Absuolute_scale_multiplayer)
+    def Click(self, row, col, action):
+        r, c = int(row), int(col)
+        target_id = f"{r}_{c}"
 
-            self.mouse.position = (x, y)
-            if action == "left":
-                self.mouse.click(Button.left, 1)
-            elif action == "right":
-                self.cell_datas[(row,col)] = "!" #To change cell to flagged immediately
-                self.mouse.click(Button.right, 1)
-            elif action == "middle": 
-                self.mouse.click(Button.middle, 1)
-            time.sleep(0.015)
+        if action == "right":
+             self.cell_datas[(r,c)] = "!" #To change cell to flagged immediately
+
+        self.page.evaluate("""({ id, action }) => {
+            const element = document.getElementById(id);
+            if (!element) return;
+                           
+            const opts = { bubbles: true, cancelable: true, view: window };
+
+            if (action === "left") {
+                element.dispatchEvent(new MouseEvent("mousedown", { ...opts, button: 0, buttons: 1 }));
+                element.dispatchEvent(new MouseEvent("mouseup", { ...opts, button: 0, buttons: 0 }));
+                element.dispatchEvent(new MouseEvent("click", { ...opts, button: 0, buttons: 0 }));
+            } 
+            else if (action === "right") {
+                element.dispatchEvent(new MouseEvent("mousedown", { ...opts, button: 2, buttons: 2 }));
+                element.dispatchEvent(new MouseEvent("mouseup", { ...opts, button: 2, buttons: 0 }));
+                element.dispatchEvent(new MouseEvent("contextmenu", { ...opts, button: 2, buttons: 2 }));
+            }
+            else if (action === "middle") {
+                element.dispatchEvent(new MouseEvent("mousedown", { ...opts, button: 1, buttons: 4 }));
+                element.dispatchEvent(new MouseEvent("mouseup", { ...opts, button: 1, buttons: 0 }));
+                element.dispatchEvent(new MouseEvent("click", { ...opts, button: 1, buttons: 0 }));
+            }
+        }""", {"id": target_id, "action": action})
 
     def Open_first_cell(self): #automaticly opening middle cell
         self.Click(self.row_count/2,self.col_count/2, "left")
 
     def Restart_on_Death(self, Auto_Start=False):
         if self.face_state == "facedead":
-            time.sleep(0.5) #preventing miss click
-            #print("The bot died. Restarting.")
-            self.Click(0,0,"left",self.face_coord) #pressing face to restart
-            self.Restart_count += 1
-            if Auto_Start: self.Open_first_cell()
+            if self.Survived_chance == 100:
+                print("An Error has been emerged, the bot died with survival chance of 100%. Press 'ESC' to quit.")
+            else:
+                self.page.locator("#face").click(force=True) #Clicking on face to restart
+                self.Restart_count += 1
+                self.edge_cells= {} #for nonlogical aciton
+                print(f"The bot died with a survival chance of: {self.Survived_chance}%.")
+                self.Survived_chance = 100
+                if Auto_Start: self.Open_first_cell()
 
     def Restart_on_Win(self, Auto_Start=False):
         if self.face_state == "facewin":
 
             share_text = self.page.inner_text("#share-text")
-            Win_score = int(re.findall(r"\d", share_text)[0]) #getting win score (int) from share text
+            Win_score = int(re.findall(r"\d+", share_text)[0]) #getting win score (int) from share text
             if Win_score:
                 self.Win_scores.append(Win_score)
                 self.Last_win_score = Win_score
 
-            time.sleep(0.5)
-            #print(f"The bot won the game in {self.Last_win_score} seconds. Restarting.")
-            self.Click(0,0,"left",self.face_coord) #pressing face to restart
+            self.page.locator("#face").click(force=True) #Clicking on face to restart
+
             self.Restart_count += 1
+            self.edge_cells= {} #for nonlogical aciton
+            print(f"The bot won the game in {self.Last_win_score} seconds with a survival chance of: {self.Survived_chance}%.")
+            self.Survived_chance = 100
             if Auto_Start: self.Open_first_cell()
 
     def Set_DOM_data(self): #cell datas come as "CELL Y_X" --- Javascript code works in browser
@@ -160,7 +171,7 @@ class MWPlaywright:
             return data;
         }""")
         self.cell_datas = {
-            (int(key.split("_")[0]),int(key.split("_")[1])): self.Status_Translater.get(status, "?") 
+            (int(key.split("_")[0]),int(key.split("_")[1])): self.Status_Translater.get(status, "?")
             for key, status in javascript_cell_datas.items()}
         #######
         self.face_state = self.page.get_attribute("#face", "class")
@@ -225,6 +236,13 @@ class MWPlaywright:
             "all_neighbors":neighbors_coords}
         return cell_details
 
+    def Found_bomb_counter(self):
+        self.founded_bomb_count = 0
+        for y in range(1, self.row_count + 1):
+                for x in range(1, self.col_count + 1):
+                    if self.cell_datas[(y,x)] == "!":
+                        self.founded_bomb_count +=1
+
     def Skip_cell(self, cell_details):
         status = cell_details["status"]
         if status in ["?", "!", 0]:
@@ -237,38 +255,11 @@ class MWPlaywright:
         if cell_details["status"] == len(cell_details["unknown_neighbors"]) + cell_details["flag_count"]:
             for ny, nx in cell_details["unknown_neighbors"]:
                 self.Click(ny, nx, "right")
+                self.Any_action_taken=True
 
         if cell_details["status"] == cell_details["flag_count"]:
             self.Click(cell_details["row"], cell_details["col"], "middle")
-
-    def OTO_Logic(self, cell_details): #One-Two-One Logic (not neccesary but cool ig)
-        row = cell_details["row"]
-        col = cell_details["col"]
-
-        if self.Get_Cell_Value(row,col) != 2: return
-        
-        Directions = [(0,1),(1,0)] #first right and left cells then top and bottom cells
-        for dy , dx in Directions:
-            prev_y , prev_x = row-dy, col-dx # left  cell - top cell 
-            next_y , next_x = row+dy, col+dx # right cell - bottom cell
-            
-            if not (1 <= prev_y <= self.row_count and 1 <= prev_x <= self.col_count): #TO skip on borders
-                continue
-            if not (1 <= next_y <= self.row_count and 1 <= next_x <= self.col_count):
-                continue
-
-            val_prev_cell = self.Get_Cell_Value(prev_y, prev_x)
-            val_next_cell = self.Get_Cell_Value(next_y, next_x)
-
-            if val_next_cell == 1 and val_prev_cell == 1:
-                unknowns = cell_details["unknown_neighbors"]
-                if len(unknowns) == 3:
-                    unknowns.sort()
-                    self.Click(unknowns[0][0], unknowns[0][1], "right")
-                    self.Click(unknowns[2][0], unknowns[2][1], "right")
-                    self.Click(prev_y, prev_x, "middle")    
-                    self.Click(next_y, next_x, "middle")
-                    return
+            self.Any_action_taken=True
 
     def Difference_Logic(self, cell_details):
         row = cell_details["row"]
@@ -296,13 +287,16 @@ class MWPlaywright:
 
                 if len(Diff_unknown_neighbors_near) == val_diff:
                     for item in Diff_unknown_neighbors_near:
-                        self.Click(item[0],item[1],"right")
+                        if not self.cell_datas[(item[0], item[1])] == "!":
+                            self.Click(item[0], item[1], "right")
+                            self.Any_action_taken=True
 
                 if Diff_unknown_neighbors_near:
                     if near_cell_unknowns_set.issubset(main_cell_unknowns_set):
                         if not val_diff:
                             for item in Diff_unknown_neighbors_near:
                                 self.Click(item[0],item[1],"left")
+                                self.Any_action_taken=True
                 
     def Two_Steps_ahead_Logic(self, cell_details): #Looking two cells ahead
         row = cell_details["row"]
@@ -333,10 +327,12 @@ class MWPlaywright:
                         for by , bx in diff_cells:
                             if self.cell_datas.get((by,bx)) == "?":
                                 self.Click(by, bx, "right")
+                                self.Any_action_taken=True
 
                     elif value_diff == 0 and len(diff_cells) > 0:
                         for cy , cx in diff_cells:
                             self.Click(cy, cx, "left")
+                            self.Any_action_taken=True
 
                 elif far_cell_unknowns_set.issubset(main_cell_unknowns_set):
                     diff_cells = main_cell_unknowns_set - far_cell_unknowns_set
@@ -345,18 +341,55 @@ class MWPlaywright:
                         for by , bx in diff_cells:
                             if self.cell_datas.get((by,bx)) == "?":
                                 self.Click(by, bx, "right")
+                                self.Any_action_taken=True
                                 
                     elif value_diff == 0 and len(diff_cells) > 0:
                         for cy , cx in diff_cells:
                             self.Click(cy, cx, "left")
+                            self.Any_action_taken=True
 
-    def Logic_actions(self, cell_details):
-        if self.Skip_cell(cell_details): return #Skip_cell if not needed
+    def First_Actions(self, cell_details):
+        if self.Skip_cell(cell_details): return #Skip cell if not needed
         
         self.Two_Steps_ahead_Logic(cell_details)
-        self.OTO_Logic(cell_details)
         self.Difference_Logic(cell_details)
-        self.Basic_Logic(cell_details) 
+        self.Basic_Logic(cell_details)
+
+    def No_Unflagged_Bomb_Left_Action(self):
+        self.Found_bomb_counter()
+        if self.founded_bomb_count == self.total_bomb_count:
+            #print("All bombs have been founded. Opening all remain unopened cells.")
+            for y in range(1, self.row_count + 1):
+                    for x in range(1, self.col_count + 1):
+                        if self.cell_datas[(y,x)] == "?":
+                            self.Click(y, x, "left")
+            self.Any_action_taken=True
+
+    def Non_Logical_Neighbor_Action(self): #for chance needed posission
+        for y in range(1, self.row_count + 1):
+            for x in range(1, self.col_count + 1):
+                cell_details = self.Get_Cell_Details(y,x)
+
+                if self.Skip_cell(cell_details): pass
+
+                elif cell_details["unknown_neighbors"]:
+                    self.edge_cells[(y, x)]= round(self.Get_Cell_Value(y,x)*100 / len(cell_details["unknown_neighbors"]),1)
+
+        if self.edge_cells:
+            safest_cell = min(self.edge_cells, key=self.edge_cells.get)
+            safest_cell_details = self.Get_Cell_Details(safest_cell[0],safest_cell[1])
+            safest_cell_unknowns = safest_cell_details["unknown_neighbors"]
+            if len(safest_cell_unknowns) > 0:
+                self.Survived_chance = self.Survived_chance * (100-self.edge_cells.get(safest_cell))/100
+                self.Click(safest_cell_unknowns[0][0], safest_cell_unknowns[0][1], "left") #Opening safest cell's first negihbor
+                self.edge_cells= {}
+                self.Any_action_taken=True
+
+    def Open_First_Uknown_Action(self):
+        for y in range(1, self.row_count + 1):
+            for x in range(1, self.col_count + 1):
+                if self.cell_datas[(y,x)] == "?":
+                    self.Click(y, x, "left")
 
     def Start_BOT(self, Auto_Start=False, will_Restart_on_Death=True, will_Restart_on_Win=False, Auto_Start_on_Death_Restart=False, Auto_Start_on_Win_Restart=False):
         print('Browser is starting. Press "R" to Stop, Press "ESC" to Quit. It may take some time at the first time.\n')
@@ -364,7 +397,7 @@ class MWPlaywright:
         self.Open_Browser()
         is_browser_running = True
         is_bot_active = True
-        print(f"Mode: {self.mode}\nColumns: {self.col_count}\nRows: {self.row_count}\nBombs: {self.bomb_count}\n")
+        print(f"Mode: {self.mode}\nColumns: {self.col_count}\nRows: {self.row_count}\nBombs: {self.total_bomb_count}\n")
 
         #Before while
         if Auto_Start: self.Open_first_cell()
@@ -379,30 +412,40 @@ class MWPlaywright:
             elif keyboard.is_pressed("r"): #Press R to pause/resume the bot
                 is_bot_active = not is_bot_active
                 if is_bot_active:
-                    print("Bot Resumed.")
+                    print("The Bot Resumed.")
                 else:
-                    print("Bot Paused. Press 'R' to Resume.")
+                    print("The Bot Paused. Press 'R' to Resume.")
                 time.sleep(0.5)
 
             if is_bot_active:
                 self.Set_DOM_data()
 
-                for y in range(1, self.row_count + 1):
-                    for x in range(1, self.col_count + 1):
-                        self.Logic_actions(self.Get_Cell_Details(y, x))
-
+                lastest_resart_count = self.Restart_count
                 if will_Restart_on_Death: self.Restart_on_Death(Auto_Start_on_Death_Restart)
                 if will_Restart_on_Win: self.Restart_on_Win(Auto_Start_on_Win_Restart)
 
+                if lastest_resart_count + 1 == self.Restart_count:
+                    pass #if Restarted: don't continue to solve
+                else:
+                    self.Any_action_taken= False
+                    for y in range(1, self.row_count + 1):
+                        for x in range(1, self.col_count + 1):
+                            self.First_Actions(self.Get_Cell_Details(y, x))
+                    
+                    if not self.Any_action_taken: #%50-%50 and else
+                        self.No_Unflagged_Bomb_Left_Action()
+                        self.Non_Logical_Neighbor_Action()
+                    
+                    if not self.Any_action_taken:
+                        self.Open_First_Uknown_Action()
             else:
-                time.sleep(0.1)
+                pass
 
         if sum(self.Win_scores) != 0:
-            print(f"\nBOT STATISTICS:\nWon: {len(self.Win_scores)}    Lost: {self.Restart_count-len(self.Win_scores)}\nTotal game(s): {self.Restart_count}\nWin Rate: %{len(self.Win_scores)*100/(self.Restart_count)}\nAverage score: {sum(self.Win_scores)/len(self.Win_scores)} second(s)\n")
+            print(f"\nTHE BOT's STATISTICS:\nGame Mode: {self.mode}\nWon: {len(self.Win_scores)}    Lost: {self.Restart_count-len(self.Win_scores)}\nTotal games: {self.Restart_count}\nWin Rate: %{len(self.Win_scores)*100/(self.Restart_count)}\nAverage score: {sum(self.Win_scores)/len(self.Win_scores)} second\n")
         else:
-            print(f"\nBot didn't win.\n")
-            
-        self.Close_Browser() #Close the Bot and the Broswer
+            print(f"\nThe Bot didn't win.\n")
+        self.Close_Browser()
 
     def Close_Browser(self):
         if self.browser:
@@ -428,10 +471,10 @@ if __name__ == "__main__":
         url = "https://minesweeperonline.com/#150-night"
         print("Invalid input. Defaulting to Expert mode.\n")
 
-    MW_BOT = MWPlaywright(url, DPI_scale=1.25)
+    MW_BOT = MWPlaywright(url)
     MW_BOT.Start_BOT(
         Auto_Start=True,
         will_Restart_on_Death=True,
-        will_Restart_on_Win=True,
         Auto_Start_on_Death_Restart=True,
+        will_Restart_on_Win=True,
         Auto_Start_on_Win_Restart=True)
