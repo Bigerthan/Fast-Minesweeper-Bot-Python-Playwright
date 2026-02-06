@@ -36,7 +36,7 @@ Well, no. As you know sometimes minesweeper is only a guessing game and you can'
 
 #### 1) Non-Logical Neighbor Action:
 
-#### 2) Open First Unopened Action:
+#### 2) Open First Unknown(Unopened) Action:
 
 
 # Setting The Settings:
