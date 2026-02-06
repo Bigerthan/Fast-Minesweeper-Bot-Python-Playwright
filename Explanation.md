@@ -24,7 +24,7 @@ This function does 2 things:
 #### 3) Two Steps Ahead Logic:
 
 #### 4) No Unflagged Bomb Left Action:
-
+This function opens all unopened cells/boxes if all the bombs are found.
 #
 But are they enough, do you need only this much logical action to win the game?
 
