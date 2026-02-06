@@ -20,8 +20,10 @@ This function does 2 things:
 - If the amount of unopened cells/boxes equals the number on the cell/box, it flags all unopened cells/boxes.
   
 #### 2) Difference Logic:
+This function looks for
 
 #### 3) Two Steps Ahead Logic:
+This function searches connection between 2 cells/boxes which have an unopened cell/box between. After that it uses mathematical set logic to solve.
 
 #### 4) No Unflagged Bomb Left Action:
 This function opens all unopened cells/boxes if all the bombs are found.
