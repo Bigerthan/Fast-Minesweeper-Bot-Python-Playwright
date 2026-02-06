@@ -28,14 +28,22 @@ This function searches connection between 2 cells/boxes which have an unopened c
 
 #### 4) No Unflagged Bomb Left Action:
 This function opens all unopened cells/boxes if all the bombs are found.
+
 #
 But are they enough, do you need only this much logical action to win the game?
 
-Well, no. As you know sometimes minesweeper is only a guessing game and you can't do anything with logics so we need some non-logical actions.
+Well, no. As you know sometimes minesweeper is only a guessing game and you can't do anything with logics so we need some non-logical actions and here they are:
+
+#### 1) Non-Logical Neighbor Action:
+
+#### 2) Open First Unopened Action:
+
+
 # Setting The Settings:
 ![](MW_PW_photos/Settings_expl.png)
 
 As you can see, there are 5 parameters at the bot's main (starting) function, which I refer to as "settings". Let's see what is their meanings.
+
 #### 1) AUTO START: 
 - ( True / False ; Default = False )
 - This is automatic "first click" parameter. If you make this parameter "True", the bot will automaticly start the game when page is loaded; else if you leave this parameter as "False", the bot won't start until you open the first cell/box.
