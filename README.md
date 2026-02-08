@@ -1,6 +1,13 @@
 # Python-Minesweeper-Bot
 This bot solves Minesweeper on minesweeperonline.com with high speed using logic algorithms and DOM reading.
 
+### Bot Features:
+- ⚡ Solves Expert mode in ~2-3 seconds.
+- 🧠 Uses Set Theory for logical play and Probability for guessing.
+- 📄​ Built with Playwright for fast DOM manipulation.
+- 🔁 Auto-restart mechanisms.
+- 🛡️ Ad-Block sor higher speed and quality.
+
 # LAST CHANGES:
 - Added "Non_Logical_Neighbor_Action" function. This is responsible for trying to solve 50/50 or other luck-based, unsolvable with logic parts. Check "Explanation.md" if you want more detail about how it works.
   
