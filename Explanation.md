@@ -65,3 +65,12 @@ As you can see, there are 5 parameters at the bot's main (starting) function, wh
 - ( True / False ; Default = True )
 - This parameter only makes a difference when 'Will Reset On Win' is "True".
 - If you leave this parameter as "True", the bot will automaticly open the first cell/box when "Will Reset On Win" restarts the game; else if you make this parameter "False", it won't open the first cell.
+
+# More Explanation
+## Chance Calculator's Cumulative Probability:
+If you look at the statistics of survival chances on death and win, you'll see that the average survival chance on win is actually lower than on death. And it looks a bit strange. The reason for this is:
+
+In order for the bot to win the game, it has to survive all the luck-based situations. Since there are many of them, the cumulative survival chance gets lower and lower. However, the survival chance on death is different. For example, in a 50/50 situation, if the bot picks the bomb cell/box to open and dies, the survival chance would be 50%. But if the bot picks the safe cell/box to open, it can find itself with another 50/50 situation and if it dies there, the survival chance would be 25%. So, when the bot dies early, it doesn't face all the possible risks, which makes its recorded survival chance higher than a full winning run.
+
+## Integer Score Recording:
+If you look at the win time (score) on win, all the scores integer because I'm getting those scores from the page and the page doesn't support float. It makes calculating the scores less accurate. For example if the bot won the game in between 1.1 and 1.9 seconds the score would be 2.
