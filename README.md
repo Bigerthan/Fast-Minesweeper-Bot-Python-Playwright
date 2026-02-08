@@ -15,11 +15,11 @@ Minesweeper Solver Bot with Playwright library
 - Deleted "OTO_Logic" function because it makes mistakes and there was no need for it.
 ### Small changes:
 - Added Statistics. It shows up when you close the bot (Only works if "Restart_on_Win" and other settings are enabled).
+- Added found bomb counter.
+- Added chance calculator. It shows chance of survival when the bot dies and wins.
   - I need to explain something. If you look at the statistics of survival chances on death and win, you'll see that the average survival chance on win is actually lower than on death. And it looks a bit strange. The reason for this is:
 
     In order for the bot to win the game, it has to survive all the luck-based situations. Since there are many of them, the cumulative survival chance gets lower and lower. However, the survival chance on death is different. For example, in a 50/50 situation, if the bot picks the bomb cell/box to open and dies, the survival chance would be 50%. But if the bot picks the safe cell/box to open, it can find itself with another 50/50 situation and if it dies there, the survival chance would be 25%. So, when the bot dies early, it doesn't face all the possible risks, which makes its recorded survival chance higher than a full winning run.
-- Added found bomb counter.
-- Added chance calculator. It shows chance of survival when the bot dies and wins.
 ## OLD CHANGES:
 - Click function has changed. I was using win32api/win32con library and it doesn't work on non-windows operating systems so I changed function to use pynput for better cross-platform compatibility.
   
