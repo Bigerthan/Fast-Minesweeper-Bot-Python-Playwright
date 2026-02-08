@@ -4,7 +4,7 @@ This bot solves Minesweeper on minesweeperonline.com with high speed using logic
 # LAST CHANGES:
 - Added "Non_Logical_Neighbor_Action" function. This is responsible for trying to solve 50/50 or other luck-based, unsolvable with logic parts. Check "Explanation.md" if you want more detail about how it works.
   
-- Added "Open_First_Uknown_Action" function. This takes charge when "Non_Logical_Neighbor_Action" can't do anything. Check "Explanation.md" if you want more detail about how it works.
+- Added "Open_First_Unknown_Action" function. This takes charge when "Non_Logical_Neighbor_Action" can't do anything. Check "Explanation.md" if you want more detail about how it works.
 
 - Added a function called "No_Unflagged_Bomb_Left_Action" and its purpose is: when all the bombs are found, it opens all the unopened cells/boxes to finish the game.
   
@@ -27,7 +27,7 @@ This bot solves Minesweeper on minesweeperonline.com with high speed using logic
 # Please read whole text for better understanding about the bot.
 After you run the code and choose the difficulty, chrome browser and then the website (https://minesweeperonline.com) will open.
 
-If you didn't change "Auto_Start" to true when calling the bot, you need to click a cell/box to the bot to start.It wont restart on win if you didn't change "Restart_on_Win" to true (by the way you need to press emoji face to restart if you didn't know). Check "Explanation.md" for settings.
+If you didn't change "Auto_Start" to true when calling the bot, you need to click a cell to the bot to start.It wont restart on win if you didn't change "Restart_on_Win" to true (by the way you need to press emoji face to restart if you didn't know). Check "Explanation.md" for settings.
 
 #
 It has an issue: normally when you set a record, a pop-up or alert shows up but, for reasons I've yet to know the pop-up is not opening and the record's name becomes "unknown" by default. The website has an anti-bot detector which prevents our records from being saved on the leaderboard but, it's not a problem because I made this code only for educational purposes. I like playing minesweeper and I respect other players so I won't try to get past the anti-bot detector.
