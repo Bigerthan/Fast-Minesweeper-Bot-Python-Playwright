@@ -1,5 +1,5 @@
 # Python-Minesweeper-Bot
-Minesweeper Solver Bot with Playwright library
+This bot solves Minesweeper on minesweeperonline.com with high speed using logic algorithms and DOM reading.
 
 # LAST CHANGES:
 - Added "Non_Logical_Neighbor_Action" function. This is responsible for trying to solve 50/50 or other luck-based, unsolvable with logic parts. Check "Explanation.md" if you want more detail about how it works.
