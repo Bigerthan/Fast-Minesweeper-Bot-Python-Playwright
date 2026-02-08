@@ -14,7 +14,7 @@ class MWPlaywright:
         self.face_state = None
         self.face_coord = (0,0)
         self.cell_datas = {}
-        self.Status_Translater = { #Didn't add "bomb-death" and "bomb-revealed" becasue they show up on death 
+        self.Status_Translator = { #Didn't add "bomb-death" and "bomb-revealed" becasue they show up on death 
             "blank": "?",
             "bombflagged": "!",
             "open0": 0,
@@ -171,7 +171,7 @@ class MWPlaywright:
             return data;
         }""")
         self.cell_datas = {
-            (int(key.split("_")[0]),int(key.split("_")[1])): self.Status_Translater.get(status, "?")
+            (int(key.split("_")[0]),int(key.split("_")[1])): self.Status_Translator.get(status, "?")
             for key, status in javascript_cell_datas.items()}
         #######
         self.face_state = self.page.get_attribute("#face", "class")
@@ -483,3 +483,4 @@ if __name__ == "__main__":
         Auto_Start_on_Death_Restart=True,
         will_Restart_on_Win=True,
         Auto_Start_on_Win_Restart=True)
+
